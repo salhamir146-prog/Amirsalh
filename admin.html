@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت - اوای یقین</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#9881;</text></svg>">
+    <style>
+        :root {
+            --primary: #1a5c3a;
+            --primary-light: #2d8a5e;
+            --primary-dark: #0d3d24;
+            --gold: #c9a84c;
+            --gold-light: #e8d5a3;
+            --bg-dark: #0a0f0d;
+            --bg-card: #111a15;
+            --bg-input: #1a2620;
+            --text-primary: #e8f0ec;
+            --text-secondary: #8fa89a;
+            --text-muted: #5a7a6a;
+            --border: #1f3d2e;
+            --border-light: #2d5a42;
+            --danger: #c0392b;
+            --danger-light: #e74c3c;
+            --success: #27ae60;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            direction: rtl;
+            min-height: 100vh;
+            line-height: 1.8;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+        /* ACCESS DENIED SCREEN */
+        .access-denied {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+        .access-denied.active { display: flex; }
+        .access-icon { font-size: 64px; margin-bottom: 20px; }
+        .access-title { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+        .access-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; max-width: 400px; }
+        .access-btn {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .access-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26, 92, 58, 0.4); }
+
+        /* ADMIN CONTENT */
+        .admin-content {
+            display: none;
+            min-height: 100vh;
+        }
+        .admin-content.active { display: flex; }
+
+        .admin-sidebar {
+            width: 260px;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+        .admin-sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .admin-sidebar-header .logo-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--gold));
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; margin: 0 auto 12px;
+            box-shadow: 0 0 20px rgba(26, 92, 58, 0.3);
+        }
+        .admin-sidebar-header h2 {
+            font-size: 20px; font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .admin-sidebar-header p {
+            font-size: 12px; color: var(--text-muted); margin-top: 4px;
+        }
+        .admin-nav { flex: 1; padding: 16px 12px; }
+        .admin-tab {
+            width: 100%; padding: 14px 16px;
+            border: none; border-radius: var(--radius-sm);
+            background: transparent; color: var(--text-secondary);
+            font-family: inherit; font-size: 14px;
+            cursor: pointer; display: flex; align-items: center;
+            gap: 12px; transition: all 0.3s ease;
+            margin-bottom: 4px; text-align: right;
+        }
+        .admin-tab:hover { background: var(--bg-input); color: var(--text-primary); }
+        .admin-tab.active {
+            background: rgba(26, 92, 58, 0.2);
+            color: var(--gold-light);
+            border: 1px solid var(--border-light);
+        }
+        .admin-tab svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .admin-sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+        .back-link {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; padding: 12px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-secondary);
+            text-decoration: none; font-size: 13px; transition: all 0.3s ease;
+        }
+        .back-link:hover { border-color: var(--border-light); color: var(--text-primary); }
+
+        .admin-main { flex: 1; margin-right: 260px; padding: 24px 32px; }
+        .admin-header { margin-bottom: 32px; }
+        .admin-header h1 { font-size: 28px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+        .admin-header p { color: var(--text-secondary); font-size: 14px; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; transition: all 0.3s ease;
+        }
+        .stat-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+        .stat-card-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 12px;
+        }
+        .stat-card-icon.green { background: rgba(39, 174, 96, 0.15); }
+        .stat-card-icon.blue { background: rgba(52, 152, 219, 0.15); }
+        .stat-card-icon.gold { background: rgba(201, 168, 76, 0.15); }
+        .stat-card-icon.purple { background: rgba(155, 89, 182, 0.15); }
+        .stat-card-value { font-size: 28px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+        .stat-card-label { font-size: 13px; color: var(--text-muted); }
+
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title {
+            font-size: 18px; font-weight: 700; color: var(--text-primary);
+            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-title svg { width: 20px; height: 20px; color: var(--gold); }
+
+        .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+        .search-input {
+            flex: 1; padding: 12px 16px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-primary); font-family: inherit; font-size: 14px;
+            outline: none; transition: all 0.3s ease;
+        }
+        .search-input:focus { border-color: var(--border-light); box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1); }
+        .search-input::placeholder { color: var(--text-muted); }
+
+        .chats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .chat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px; transition: all 0.3s ease;
+        }
+        .chat-card:hover { border-color: var(--border-light); }
+        .chat-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .chat-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .chat-card-date { font-size: 11px; color: var(--text-muted); }
+        .chat-card-preview {
+            font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;
+            line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .chat-card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .chat-card-count {
+            font-size: 12px; color: var(--text-muted); background: var(--bg-input);
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .chat-card-actions { display: flex; gap: 8px; }
+        .chat-card-btn {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            font-family: inherit; font-size: 12px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .chat-card-btn.view-btn { background: var(--primary); color: white; }
+        .chat-card-btn.view-btn:hover { background: var(--primary-light); }
+        .chat-card-btn.delete-btn { background: var(--danger); color: white; }
+        .chat-card-btn.delete-btn:hover { background: var(--danger-light); }
+
+        .editor-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+        }
+        .editor-textarea {
+            width: 100%; min-height: 400px; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 16px; color: var(--text-primary);
+            font-family: 'Vazirmatn', monospace; font-size: 13px;
+            line-height: 1.8; resize: vertical; outline: none; transition: all 0.3s ease;
+        }
+        .editor-textarea:focus { border-color: var(--border-light); box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1); }
+        .editor-actions { display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end; }
+
+        .btn {
+            padding: 10px 24px; border: none; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 14px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center;
+            gap: 8px; transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(26, 92, 58, 0.4); }
+        .btn-secondary {
+            background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--border-light); color: var(--text-primary); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: var(--danger-light); }
+
+        .training-list { display: flex; flex-direction: column; gap: 12px; }
+        .training-item {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px; transition: all 0.3s ease;
+        }
+        .training-item:hover { border-color: var(--border-light); }
+        .training-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .training-item-number {
+            font-size: 12px; color: var(--gold); font-weight: 700;
+            background: rgba(201, 168, 76, 0.1); padding: 4px 10px; border-radius: 20px;
+        }
+        .training-item-delete {
+            width: 28px; height: 28px; border-radius: 6px; border: none;
+            background: var(--danger); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; transition: all 0.3s ease;
+        }
+        .training-item-delete:hover { background: var(--danger-light); }
+        .training-item-question, .training-item-answer { font-size: 13px; line-height: 1.7; margin-bottom: 8px; }
+        .training-item-question strong, .training-item-answer strong { color: var(--gold); }
+
+        .settings-form {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 8px;
+        }
+        .form-group label .hint { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 12px 16px; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-primary); font-family: inherit; font-size: 14px;
+            outline: none; transition: all 0.3s ease;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--border-light); box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
+        }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-slider { display: flex; align-items: center; gap: 12px; }
+        .form-slider input[type="range"] {
+            flex: 1; -webkit-appearance: none; height: 6px;
+            background: var(--bg-input); border-radius: 3px; outline: none;
+        }
+        .form-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px;
+            background: var(--primary-light); border-radius: 50%; cursor: pointer;
+        }
+        .form-slider-value { min-width: 40px; text-align: center; font-size: 14px; color: var(--gold); font-weight: 600; }
+        .form-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .form-checkbox input { width: 20px; height: 20px; accent-color: var(--primary); }
+
+        .data-actions {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-top: 24px;
+        }
+        .data-action-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; text-align: center; transition: all 0.3s ease;
+        }
+        .data-action-card:hover { border-color: var(--border-light); }
+        .data-action-icon { font-size: 32px; margin-bottom: 12px; }
+        .data-action-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .data-action-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7); display: flex;
+            align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); width: 100%; max-width: 700px;
+            max-height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h3 { font-size: 18px; font-weight: 700; }
+        .modal-close {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            background: var(--bg-input); color: var(--text-secondary);
+            cursor: pointer; font-size: 20px; display: flex;
+            align-items: center; justify-content: center; transition: all 0.3s ease;
+        }
+        .modal-close:hover { background: var(--danger); color: white; }
+        .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+        .modal-body.chat-view { display: flex; flex-direction: column; gap: 16px; }
+        .modal-message { display: flex; gap: 12px; padding: 12px; border-radius: var(--radius-sm); }
+        .modal-message.user { background: var(--bg-input); }
+        .modal-message.bot { background: rgba(26, 92, 58, 0.1); }
+        .modal-message-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .modal-message-content { flex: 1; }
+        .modal-message-author { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .modal-message-text { font-size: 13px; line-height: 1.7; color: var(--text-primary); white-space: pre-wrap; }
+
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .empty-desc { font-size: 14px; color: var(--text-muted); }
+
+        .admin-toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; padding: 14px 28px; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.4s ease;
+        }
+        .admin-toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* User Info Badges */
+        .chat-card-user-info {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .user-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .user-name {
+            background: rgba(26, 92, 58, 0.2);
+            color: #8fa89a;
+            border: 1px solid var(--border-light);
+        }
+        .user-phone {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--gold);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar { width: 100%; transform: translateX(100%); transition: transform 0.3s ease; }
+            .admin-sidebar.open { transform: translateX(0); }
+            .admin-main { margin-right: 0; padding: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .chats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ACCESS DENIED - shown if not authenticated -->
+    <div class="access-denied" id="access-denied">
+        <div class="access-icon">&#128683;</div>
+        <div class="access-title">دسترسی غیرمجاز</div>
+        <div class="access-desc">
+            برای دسترسی به پنل مدیریت، لطفا به صفحه چت برگردید و رمز عبور را به ربات ارسال کنید.
+        </div>
+        <a href="index.html" class="access-btn">&#8592; بازگشت به صفحه چت</a>
+    </div>
+
+    <!-- ADMIN CONTENT - shown only if authenticated -->
+    <div class="admin-content" id="admin-content">
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-header">
+                <div class="logo-icon">&#9881;</div>
+                <h2>پنل مدیریت</h2>
+                <p>اوای یقین - مسجد حضرت ابوالفضل (ع)</p>
+            </div>
+            <nav class="admin-nav">
+                <button class="admin-tab active" data-tab="dashboard" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    داشبورد
+                </button>
+                <button class="admin-tab" data-tab="chats" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    گفتگوها
+                </button>
+                <button class="admin-tab" data-tab="personality" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    شخصیت ربات
+                </button>
+                <button class="admin-tab" data-tab="training" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    آموزش ربات
+                </button>
+                <button class="admin-tab" data-tab="settings" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    تنظیمات
+                </button>
+            </nav>
+            <div class="admin-sidebar-footer">
+                <a href="index.html" class="back-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    بازگشت به چت
+                </a>
+            </div>
+        </aside>
+        <main class="admin-main">
+            <!-- Dashboard -->
+            <div class="admin-tab-content active" id="tab-dashboard">
+                <div class="admin-header"><h1>داشبورد مدیریت</h1><p>نمای کلی وضعیت ربات اوای یقین</p></div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-card-icon green">&#128172;</div><div class="stat-card-value" id="stat-total-chats">0</div><div class="stat-card-label">کل گفتگوها</div></div>
+                    <div class="stat-card"><div class="stat-card-icon blue">&#128231;</div><div class="stat-card-value" id="stat-total-messages">0</div><div class="stat-card-label">کل پیام ها</div></div>
+                    <div class="stat-card"><div class="stat-card-icon gold">&#128197;</div><div class="stat-card-value" id="stat-today-chats">0</div><div class="stat-card-label">گفتگوهای امروز</div></div>
+                    <div class="stat-card"><div class="stat-card-icon purple">&#128218;</div><div class="stat-card-value" id="stat-training-items">0</div><div class="stat-card-label">موارد آموزشی</div></div>
+                </div>
+                <h3 class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>مدیریت داده ها</h3>
+                <div class="data-actions">
+                    <div class="data-action-card"><div class="data-action-icon">&#128190;</div><div class="data-action-title">پشتیبان گیری</div><div class="data-action-desc">دانلود تمام داده ها به صورت JSON</div><button class="btn btn-primary" id="export-data" type="button">دانلود</button></div>
+                    <div class="data-action-card"><div class="data-action-icon">&#128229;</div><div class="data-action-title">بازیابی داده ها</div><div class="data-action-desc">بارگذاری فایل پشتیبان</div><button class="btn btn-primary" id="import-data" type="button">بارگذاری</button></div>
+                    <div class="data-action-card"><div class="data-action-icon">&#128465;</div><div class="data-action-title">حذف همه داده ها</div><div class="data-action-desc">پاک کردن تمام اطلاعات</div><button class="btn btn-danger" id="clear-all" type="button">حذف</button></div>
+                </div>
+            </div>
+            <!-- Chats -->
+            <div class="admin-tab-content" id="tab-chats">
+                <div class="admin-header"><h1>گفتگوها</h1><p>مشاهده و مدیریت تمام گفتگوهای کاربران</p></div>
+                <div class="search-bar"><input type="text" class="search-input" id="search-chats" placeholder="جستجو در گفتگوها..."></div>
+                <div class="chats-grid" id="chats-list">
+                    <div class="empty-state"><div class="empty-icon">&#128172;</div><div class="empty-title">هیچ گفتگویی یافت نشد</div><div class="empty-desc">هنوز گفتگویی ثبت نشده است</div></div>
+                </div>
+            </div>
+            <!-- Personality -->
+            <div class="admin-tab-content" id="tab-personality">
+                <div class="admin-header"><h1>شخصیت ربات</h1><p>ویرایش شخصیت و رفتار هوش مصنوعی</p></div>
+                <div class="editor-container">
+                    <textarea class="editor-textarea" id="personality-editor" placeholder="شخصیت ربات را اینجا وارد کنید..."></textarea>
+                    <div class="editor-actions">
+                        <button class="btn btn-secondary" id="reset-personality" type="button">بازگرداندن پیش فرض</button>
+                        <button class="btn btn-primary" id="save-personality" type="button">ذخیره تغییرات</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Training -->
+            <div class="admin-tab-content" id="tab-training">
+                <div class="admin-header"><h1>آموزش ربات</h1><p>اضافه کردن دانش و اطلاعات جدید به ربات</p></div>
+                <div style="margin-bottom: 20px;"><button class="btn btn-primary" id="add-training" type="button">&#10133; افزودن دانش جدید</button></div>
+                <div class="training-list" id="training-list">
+                    <div class="empty-state"><div class="empty-icon">&#128218;</div><div class="empty-title">هیچ آموزشی ثبت نشده</div><div class="empty-desc">با دکمه بالا دانش جدید به ربات اضافه کنید</div></div>
+                </div>
+            </div>
+            <!-- Settings -->
+            <div class="admin-tab-content" id="tab-settings">
+                <div class="admin-header"><h1>تنظیمات</h1><p>پیکربندی API، مدل و سایر تنظیمات ربات</p></div>
+                <div class="settings-form" id="settings-form">
+                    <div class="form-group"><label>API Key <span class="hint">(Groq API)</span></label><input type="password" class="form-input" id="setting-api-key" placeholder="gsk_..."></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>مدل هوش مصنوعی</label><select class="form-select" id="setting-model"><option value="llama-3.3-70b-versatile">LLaMA 3.3 70B</option><option value="llama-3.1-8b-instant">LLaMA 3.1 8B</option><option value="mixtral-8x7b-32768">Mixtral 8x7B</option><option value="gemma2-9b-it">Gemma 2 9B</option></select></div>
+                        <div class="form-group"><label>حداکثر توکن ها</label><input type="number" class="form-input" id="setting-max-tokens" min="100" max="8192" value="2048"></div>
+                    </div>
+                    <div class="form-group"><label>دما (Temperature) <span class="hint">سطح خلاقیت</span></label><div class="form-slider"><input type="range" id="setting-temperature" min="0" max="2" step="0.1" value="0.7"><span class="form-slider-value" id="setting-temp-value">0.7</span></div></div>
+                    <div class="form-group"><label>پیام خوش آمدگویی</label><textarea class="form-textarea" id="setting-welcome" placeholder="پیام اولیه ربات..."></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-checkbox"><input type="checkbox" id="setting-enable-history" checked><span>ذخیره تاریخچه گفتگوها</span></label></div>
+                        <div class="form-group"><label>حداکثر تعداد گفتگوها</label><input type="number" class="form-input" id="setting-max-history" min="10" max="200" value="50"></div>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn btn-secondary" id="reset-settings" type="button">بازگرداندن پیش فرض</button>
+                        <button class="btn btn-primary" id="save-settings" type="button">ذخیره تنظیمات</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+    // ============================================
+    // SECURITY CHECK - Only allow access if authenticated from chat
+    // ============================================
+    (function() {
+        var ADMIN_AUTH_KEY = 'oay_admin_authenticated';
+        var ADMIN_AUTH_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+        function checkAuth() {
+            var authData = localStorage.getItem(ADMIN_AUTH_KEY);
+            if (!authData) return false;
+            try {
+                var data = JSON.parse(authData);
+                if (Date.now() - data.timestamp > ADMIN_AUTH_TIMEOUT) {
+                    localStorage.removeItem(ADMIN_AUTH_KEY);
+                    return false;
+                }
+                return data.authenticated === true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // On page load: check auth
+        if (checkAuth()) {
+            // Show admin panel
+            document.getElementById('access-denied').style.display = 'none';
+            document.getElementById('admin-content').classList.add('active');
+        } else {
+            // Show access denied
+            document.getElementById('access-denied').classList.add('active');
+            document.getElementById('admin-content').style.display = 'none';
+        }
+    })();
+    </script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
