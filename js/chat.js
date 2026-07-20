@@ -1,5 +1,5 @@
 // ============================================
-// اوای یقین - منطق چت
+// اوای یقین - منطق چت (نسخه چند API + Proxy)
 // ============================================
 
 (function() {
@@ -15,8 +15,35 @@
     // DOM Elements
     var chatContainer, chatInput, sendBtn, newChatBtn, sidebar, menuToggle, chatHistoryEl, welcomeScreen;
 
+    // Settings cache
+    var botSettings = {};
+
+    function loadSettings() {
+        try {
+            var saved = localStorage.getItem('oay_settings');
+            if (saved) {
+                botSettings = JSON.parse(saved);
+            }
+        } catch(e) {
+            botSettings = {};
+        }
+
+        // Fallback to defaults
+        if (!botSettings.provider) botSettings.provider = CONFIG.DEFAULT_PROVIDER;
+        if (!botSettings.apiKey) botSettings.apiKey = CONFIG.DEFAULT_API_KEY;
+        if (!botSettings.model) botSettings.model = CONFIG.DEFAULT_MODEL;
+        if (!botSettings.apiUrl) botSettings.apiUrl = CONFIG.DEFAULT_URL;
+        if (botSettings.temperature === undefined) botSettings.temperature = CONFIG.DEFAULT_TEMPERATURE;
+        if (!botSettings.maxTokens) botSettings.maxTokens = CONFIG.DEFAULT_MAX_TOKENS;
+        if (botSettings.topP === undefined) botSettings.topP = CONFIG.DEFAULT_TOP_P;
+        if (botSettings.frequencyPenalty === undefined) botSettings.frequencyPenalty = CONFIG.DEFAULT_FREQUENCY_PENALTY;
+        if (botSettings.presencePenalty === undefined) botSettings.presencePenalty = CONFIG.DEFAULT_PRESENCE_PENALTY;
+    }
+
     // Initialize when DOM is ready
     function init() {
+        loadSettings();
+
         // Check if user is registered
         try {
             var savedUser = localStorage.getItem('oay_user_info');
@@ -62,7 +89,7 @@
 
     function showRegistration() {
         var overlay = document.getElementById('registration-overlay');
-        if (overlay) overlay.style.display = 'flex';
+        if (overlay) overlay.classList.remove('hidden');
 
         var regBtn = document.getElementById('reg-btn');
         var regName = document.getElementById('reg-name');
@@ -70,7 +97,7 @@
         var regError = document.getElementById('reg-error');
 
         if (regBtn) {
-            // Remove old listeners to prevent duplicates
+            // Remove old listeners by cloning
             var newBtn = regBtn.cloneNode(true);
             regBtn.parentNode.replaceChild(newBtn, regBtn);
             regBtn = newBtn;
@@ -111,7 +138,7 @@
 
     function hideRegistration() {
         var overlay = document.getElementById('registration-overlay');
-        if (overlay) overlay.style.display = 'none';
+        if (overlay) overlay.classList.add('hidden');
     }
 
     function bindEvents() {
@@ -151,16 +178,17 @@
         }
 
         // Suggestion cards
-        document.querySelectorAll('.suggestion-card').forEach(function(card) {
-            card.addEventListener('click', function(e) {
+        var suggestionCards = document.querySelectorAll('.suggestion-card');
+        for (var i = 0; i < suggestionCards.length; i++) {
+            suggestionCards[i].addEventListener('click', function(e) {
                 e.preventDefault();
-                var titleEl = card.querySelector('.suggestion-card-title');
+                var titleEl = this.querySelector('.suggestion-card-title');
                 if (titleEl && chatInput) {
                     chatInput.value = titleEl.textContent.trim();
                     sendMessage();
                 }
             });
-        });
+        }
     }
 
     function autoResize() {
@@ -230,7 +258,15 @@
             saveChat();
         }).catch(function(error) {
             hideTyping();
-            addMessage('bot', 'با عرض پوزش، مشکلی در ارتباط با سرور پیش آمد. لطفا دوباره تلاش کنید.');
+            var errorMsg = 'با عرض پوزش، مشکلی در ارتباط با سرور پیش آمد.';
+            if (error.message && error.message.indexOf('401') !== -1) {
+                errorMsg += ' لطفا API Key را در پنل مدیریت بررسی کنید.';
+            } else if (error.message && error.message.indexOf('429') !== -1) {
+                errorMsg += ' محدودیت درخواست exceeded. لطفا چند لحظه صبر کنید.';
+            } else if (error.message && error.message.indexOf('500') !== -1) {
+                errorMsg += ' خطای سرور. لطفا مدل دیگری انتخاب کنید.';
+            }
+            addMessage('bot', errorMsg);
             console.error('Error:', error);
         });
     }
@@ -315,19 +351,23 @@
         if (typingEl) typingEl.remove();
     }
 
+    // ============================================
+    // MAIN API CALL - With Proxy + Direct Fallback
+    // ============================================
     function getBotResponse() {
-        // Load personality from localStorage (if admin changed it)
+        // Reload settings
+        loadSettings();
+
+        // Load personality
         var personality = BOT_PERSONALITY;
         try {
             var savedPersonality = localStorage.getItem('oay_personality');
             if (savedPersonality && savedPersonality.trim().length > 0) {
                 personality = savedPersonality;
             }
-        } catch(e) {
-            // use default
-        }
+        } catch(e) {}
 
-        // Load training data and append to personality
+        // Load training data
         var trainingText = '';
         try {
             var savedTraining = localStorage.getItem('oay_training');
@@ -341,36 +381,186 @@
                     }
                 }
             }
-        } catch(e) {
-            // ignore training errors
-        }
+        } catch(e) {}
 
         var fullPersonality = personality + trainingText;
 
-        // Build messages array WITHOUT spread operator (ES5 compatible)
-        var apiMessages = [{ role: 'system', content: fullPersonality }];
-        for (var i = 0; i < messages.length; i++) {
-            apiMessages.push(messages[i]);
+        var provider = botSettings.provider || CONFIG.DEFAULT_PROVIDER;
+        var apiKey = botSettings.apiKey || CONFIG.DEFAULT_API_KEY;
+        var model = botSettings.model || CONFIG.DEFAULT_MODEL;
+        var apiUrl = botSettings.apiUrl || CONFIG.DEFAULT_URL;
+        var temperature = botSettings.temperature !== undefined ? botSettings.temperature : CONFIG.DEFAULT_TEMPERATURE;
+        var maxTokens = botSettings.maxTokens || CONFIG.DEFAULT_MAX_TOKENS;
+        var topP = botSettings.topP !== undefined ? botSettings.topP : CONFIG.DEFAULT_TOP_P;
+        var frequencyPenalty = botSettings.frequencyPenalty !== undefined ? botSettings.frequencyPenalty : CONFIG.DEFAULT_FREQUENCY_PENALTY;
+        var presencePenalty = botSettings.presencePenalty !== undefined ? botSettings.presencePenalty : CONFIG.DEFAULT_PRESENCE_PENALTY;
+
+        var providerConfig = CONFIG.PROVIDERS[provider] || CONFIG.PROVIDERS.groq;
+
+        // Build request body and headers
+        var requestBody;
+        var targetHeaders = {};
+
+        if (provider === 'anthropic') {
+            targetHeaders['x-api-key'] = apiKey;
+            targetHeaders['anthropic-version'] = '2023-06-01';
+
+            var anthropicMessages = [];
+            for (var j = 0; j < messages.length; j++) {
+                anthropicMessages.push({
+                    role: messages[j].role === 'assistant' ? 'assistant' : 'user',
+                    content: messages[j].content
+                });
+            }
+
+            requestBody = {
+                model: model,
+                max_tokens: maxTokens,
+                temperature: temperature,
+                top_p: topP,
+                system: fullPersonality,
+                messages: anthropicMessages
+            };
+        } else if (provider === 'google') {
+            var geminiUrl = apiUrl + model + ':generateContent';
+
+            var geminiContents = [];
+            for (var k = 0; k < messages.length; k++) {
+                geminiContents.push({
+                    role: messages[k].role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: messages[k].content }]
+                });
+            }
+
+            requestBody = {
+                contents: geminiContents,
+                generationConfig: {
+                    temperature: temperature,
+                    maxOutputTokens: maxTokens,
+                    topP: topP
+                }
+            };
+
+            // For Google, we need to handle differently
+            // Try proxy first, then direct
+            return callApiWithFallback(geminiUrl, requestBody, { 'Content-Type': 'application/json' }, provider, apiKey, true);
+        } else {
+            // OpenAI-compatible format (Groq, OpenAI, Custom)
+            targetHeaders['Authorization'] = 'Bearer ' + apiKey;
+
+            var openaiMessages = [{ role: 'system', content: fullPersonality }];
+            for (var m = 0; m < messages.length; m++) {
+                openaiMessages.push({
+                    role: messages[m].role,
+                    content: messages[m].content
+                });
+            }
+
+            requestBody = {
+                model: model,
+                messages: openaiMessages,
+                temperature: temperature,
+                max_tokens: maxTokens,
+                top_p: topP,
+                frequency_penalty: frequencyPenalty,
+                presence_penalty: presencePenalty
+            };
         }
 
-        return fetch(CONFIG.API_URL, {
+        // Try proxy first, then direct fallback
+        return callApiWithFallback(apiUrl, requestBody, targetHeaders, provider, apiKey, false);
+    }
+
+    // ============================================
+    // PROXY + DIRECT FALLBACK
+    // ============================================
+    function callApiWithFallback(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle) {
+        // First, try Proxy (if enabled and not on local file)
+        var useProxy = CONFIG.USE_PROXY && window.location.protocol !== 'file:';
+
+        if (useProxy) {
+            return callViaProxy(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle)
+                .catch(function(err) {
+                    console.log('Proxy failed, trying direct...');
+                    return callDirect(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle);
+                });
+        } else {
+            // Direct call (needs VPN for filtered APIs)
+            return callDirect(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle);
+        }
+    }
+
+    function callViaProxy(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle) {
+        var proxyBody = {
+            provider: provider,
+            apiUrl: apiUrl,
+            apiKey: apiKey,
+            requestBody: requestBody,
+            headers: targetHeaders
+        };
+
+        return fetch(CONFIG.PROXY_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + CONFIG.API_KEY
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                model: CONFIG.MODEL,
-                messages: apiMessages,
-                temperature: 0.7,
-                max_tokens: 2048
-            })
+            body: JSON.stringify(proxyBody)
+        }).then(function(response) {
+            if (!response.ok) {
+                return response.json().then(function(data) {
+                    throw new Error('Proxy error: ' + (data.error || response.status));
+                });
+            }
+            return response.json();
+        }).then(function(data) {
+            return extractResponse(data, provider);
+        });
+    }
+
+    function callDirect(apiUrl, requestBody, targetHeaders, provider, apiKey, isGoogle) {
+        var headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (isGoogle) {
+            // Google uses query param
+            apiUrl = apiUrl + '?key=' + apiKey;
+        } else if (provider === 'anthropic') {
+            headers['x-api-key'] = apiKey;
+            headers['anthropic-version'] = '2023-06-01';
+        } else {
+            headers['Authorization'] = 'Bearer ' + apiKey;
+        }
+
+        // Merge target headers
+        for (var key in targetHeaders) {
+            headers[key] = targetHeaders[key];
+        }
+
+        return fetch(apiUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(requestBody)
         }).then(function(response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
         }).then(function(data) {
-            return data.choices[0].message.content;
+            return extractResponse(data, provider);
         });
+    }
+
+    function extractResponse(data, provider) {
+        if (provider === 'anthropic') {
+            return data.content && data.content[0] ? data.content[0].text : '';
+        } else if (provider === 'google') {
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                return data.candidates[0].content.parts[0].text;
+            }
+            throw new Error('Invalid Google response format');
+        } else {
+            // OpenAI format
+            return data.choices[0].message.content;
+        }
     }
 
     function scrollToBottom() {
@@ -402,11 +592,24 @@
         if (existingIndex >= 0) {
             chatHistory[existingIndex] = chatData;
         } else {
-            chatHistory.unshift(chatData);
+            var newHistory = [chatData];
+            for (var h = 0; h < chatHistory.length; h++) {
+                newHistory.push(chatHistory[h]);
+            }
+            chatHistory = newHistory;
         }
 
-        if (chatHistory.length > 50) {
-            chatHistory = chatHistory.slice(0, 50);
+        var maxHistory = 50;
+        try {
+            var s = localStorage.getItem('oay_settings');
+            if (s) {
+                var parsed = JSON.parse(s);
+                if (parsed.maxHistoryChats) maxHistory = parsed.maxHistoryChats;
+            }
+        } catch(e) {}
+
+        if (chatHistory.length > maxHistory) {
+            chatHistory = chatHistory.slice(0, maxHistory);
         }
 
         localStorage.setItem('oay_chats', JSON.stringify(chatHistory));
@@ -442,13 +645,13 @@
         }
         chatHistoryEl.innerHTML = html;
 
-        // Bind click events to history items
-        chatHistoryEl.querySelectorAll('.history-item').forEach(function(item) {
-            item.addEventListener('click', function() {
-                var chatId = item.getAttribute('data-chat-id');
+        var historyItems = chatHistoryEl.querySelectorAll('.history-item');
+        for (var idx = 0; idx < historyItems.length; idx++) {
+            historyItems[idx].addEventListener('click', function() {
+                var chatId = this.getAttribute('data-chat-id');
                 loadChat(chatId);
             });
-        });
+        }
     }
 
     function loadChat(chatId) {
@@ -475,7 +678,6 @@
     }
 
     function openAdminPanel() {
-        // Set admin auth flag so admin.html allows access
         localStorage.setItem('oay_admin_authenticated', JSON.stringify({
             authenticated: true,
             timestamp: Date.now()
