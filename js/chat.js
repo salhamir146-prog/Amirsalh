@@ -311,6 +311,37 @@
     }
 
     function getBotResponse() {
+        // Load personality from localStorage (if admin changed it)
+        var personality = BOT_PERSONALITY;
+        try {
+            var savedPersonality = localStorage.getItem('oay_personality');
+            if (savedPersonality && savedPersonality.trim().length > 0) {
+                personality = savedPersonality;
+            }
+        } catch(e) {
+            // use default
+        }
+
+        // Load training data and append to personality
+        var trainingText = '';
+        try {
+            var savedTraining = localStorage.getItem('oay_training');
+            if (savedTraining) {
+                var training = JSON.parse(savedTraining);
+                if (training && training.length > 0) {
+                    trainingText = '\n\n## دانش اضافی:\n';
+                    for (var i = 0; i < training.length; i++) {
+                        trainingText += 'سوال: ' + training[i].question + '\n';
+                        trainingText += 'پاسخ: ' + training[i].answer + '\n\n';
+                    }
+                }
+            }
+        } catch(e) {
+            // ignore training errors
+        }
+
+        var fullPersonality = personality + trainingText;
+
         return fetch(CONFIG.API_URL, {
             method: 'POST',
             headers: {
@@ -320,7 +351,7 @@
             body: JSON.stringify({
                 model: CONFIG.MODEL,
                 messages: [
-                    { role: 'system', content: BOT_PERSONALITY },
+                    { role: 'system', content: fullPersonality },
                     ...messages
                 ],
                 temperature: 0.7,
