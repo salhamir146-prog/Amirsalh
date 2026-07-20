@@ -6,14 +6,14 @@
     'use strict';
 
     // State
-    let messages = [];
-    let currentChatId = null;
-    let isTyping = false;
-    let chatHistory = [];
-    let userInfo = { name: '', phone: '' };
+    var messages = [];
+    var currentChatId = null;
+    var isTyping = false;
+    var chatHistory = [];
+    var userInfo = { name: '', phone: '' };
 
     // DOM Elements
-    let chatContainer, chatInput, sendBtn, newChatBtn, sidebar, menuToggle, chatHistoryEl, welcomeScreen;
+    var chatContainer, chatInput, sendBtn, newChatBtn, sidebar, menuToggle, chatHistoryEl, welcomeScreen;
 
     // Initialize when DOM is ready
     function init() {
@@ -62,7 +62,7 @@
 
     function showRegistration() {
         var overlay = document.getElementById('registration-overlay');
-        if (overlay) overlay.classList.remove('hidden');
+        if (overlay) overlay.style.display = 'flex';
 
         var regBtn = document.getElementById('reg-btn');
         var regName = document.getElementById('reg-name');
@@ -70,6 +70,11 @@
         var regError = document.getElementById('reg-error');
 
         if (regBtn) {
+            // Remove old listeners to prevent duplicates
+            var newBtn = regBtn.cloneNode(true);
+            regBtn.parentNode.replaceChild(newBtn, regBtn);
+            regBtn = newBtn;
+
             regBtn.addEventListener('click', function() {
                 var name = regName.value.trim();
                 var phone = regPhone.value.trim();
@@ -106,7 +111,7 @@
 
     function hideRegistration() {
         var overlay = document.getElementById('registration-overlay');
-        if (overlay) overlay.classList.add('hidden');
+        if (overlay) overlay.style.display = 'none';
     }
 
     function bindEvents() {
@@ -342,6 +347,12 @@
 
         var fullPersonality = personality + trainingText;
 
+        // Build messages array WITHOUT spread operator (ES5 compatible)
+        var apiMessages = [{ role: 'system', content: fullPersonality }];
+        for (var i = 0; i < messages.length; i++) {
+            apiMessages.push(messages[i]);
+        }
+
         return fetch(CONFIG.API_URL, {
             method: 'POST',
             headers: {
@@ -350,10 +361,7 @@
             },
             body: JSON.stringify({
                 model: CONFIG.MODEL,
-                messages: [
-                    { role: 'system', content: fullPersonality },
-                    ...messages
-                ],
+                messages: apiMessages,
                 temperature: 0.7,
                 max_tokens: 2048
             })
@@ -468,15 +476,10 @@
 
     function openAdminPanel() {
         // Set admin auth flag so admin.html allows access
-        if (typeof window.setAdminAuth === 'function') {
-            window.setAdminAuth();
-        } else {
-            // Fallback: set auth directly in localStorage
-            localStorage.setItem('oay_admin_authenticated', JSON.stringify({
-                authenticated: true,
-                timestamp: Date.now()
-            }));
-        }
+        localStorage.setItem('oay_admin_authenticated', JSON.stringify({
+            authenticated: true,
+            timestamp: Date.now()
+        }));
 
         var toast = document.createElement('div');
         toast.className = 'admin-access-toast show';
