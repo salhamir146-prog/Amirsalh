@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گزارش کامل چت‌ها - اوای یقین</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128220;</text></svg>">
+    <style>
+        :root {
+            --primary: #1a5c3a;
+            --primary-light: #2d8a5e;
+            --gold: #c9a84c;
+            --gold-light: #e8d5a3;
+            --bg-dark: #0a0f0d;
+            --bg-card: #111a15;
+            --bg-input: #1a2620;
+            --text-primary: #e8f0ec;
+            --text-secondary: #8fa89a;
+            --text-muted: #5a7a6a;
+            --border: #1f3d2e;
+            --border-light: #2d5a42;
+            --danger: #c0392b;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            direction: rtl;
+            min-height: 100vh;
+            line-height: 1.8;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .header-title {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-subtitle { font-size: 13px; color: var(--text-muted); }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .search-input {
+            padding: 10px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            width: 280px;
+        }
+        .search-input:focus { border-color: var(--border-light); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--border-light); color: var(--text-primary); }
+
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            padding: 16px 32px;
+            background: rgba(26, 92, 58, 0.1);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .stat-item strong {
+            color: var(--gold);
+            font-size: 18px;
+        }
+
+        .container {
+            padding: 24px 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .chat-list { display: flex; flex-direction: column; gap: 16px; }
+
+        .chat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .chat-card:hover { border-color: var(--border-light); }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .chat-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .chat-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-input);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .chat-user-info {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .user-badge {
+            font-size: 13px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .user-name {
+            background: rgba(26, 92, 58, 0.2);
+            color: #8fa89a;
+            border: 1px solid var(--border-light);
+        }
+        .user-phone {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--gold);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+        }
+        .msg-count {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .chat-preview {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            line-height: 1.7;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+        }
+
+        .chat-messages {
+            display: none;
+            margin-top: 16px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+        .chat-messages.open { display: block; }
+
+        .msg-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: var(--radius-sm);
+        }
+        .msg-item.user { background: var(--bg-input); }
+        .msg-item.bot { background: rgba(26, 92, 58, 0.1); }
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .msg-avatar.user { background: var(--bg-input); border: 1px solid var(--border); }
+        .msg-avatar.bot { background: linear-gradient(135deg, var(--primary), var(--gold)); }
+        .msg-content { flex: 1; }
+        .msg-author { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .msg-text { font-size: 13px; line-height: 1.7; color: var(--text-primary); white-space: pre-wrap; }
+
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .chat-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .chat-btn.view { background: var(--primary); color: white; }
+        .chat-btn.view:hover { background: var(--primary-light); }
+        .chat-btn.delete { background: var(--danger); color: white; }
+        .chat-btn.delete:hover { background: #e74c3c; }
+        .chat-btn.export { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border); }
+        .chat-btn.export:hover { border-color: var(--border-light); color: var(--text-primary); }
+
+        .empty-state { text-align: center; padding: 80px 20px; }
+        .empty-icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .empty-desc { font-size: 14px; color: var(--text-muted); }
+
+        .no-access {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .no-access.active { display: flex; }
+        .no-access-icon { font-size: 64px; margin-bottom: 20px; }
+        .no-access-title { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+        .no-access-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; }
+
+        @media (max-width: 768px) {
+            .header { padding: 16px; }
+            .container { padding: 16px; }
+            .search-input { width: 100%; }
+            .stats-bar { padding: 12px 16px; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- Access Denied -->
+    <div class="no-access" id="no-access">
+        <div class="no-access-icon">&#128683;</div>
+        <div class="no-access-title">دسترسی غیرمجاز</div>
+        <div class="no-access-desc">برای مشاهده این صفحه، ابتدا وارد پنل مدیریت شوید.</div>
+        <a href="admin.html" class="btn btn-primary">رفتن به پنل مدیریت</a>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <div class="header">
+            <div>
+                <div class="header-title">&#128220; گزارش کامل چت‌ها</div>
+                <div class="header-subtitle">تمام گفتگوها از اول تولد ربات تا امروز</div>
+            </div>
+            <div class="header-actions">
+                <input type="text" class="search-input" id="search-input" placeholder="جستجو در نام، شماره یا متن چت...">
+                <button class="btn btn-secondary" id="export-all" type="button">&#128190; خروجی Excel</button>
+                <a href="admin.html" class="btn btn-secondary">&#8592; پنل مدیریت</a>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">&#128172; کل گفتگوها: <strong id="total-chats">0</strong></div>
+            <div class="stat-item">&#128231; کل پیام‌ها: <strong id="total-messages">0</strong></div>
+            <div class="stat-item">&#128100; کل کاربران: <strong id="total-users">0</strong></div>
+            <div class="stat-item">&#128197; از تاریخ: <strong id="first-date">-</strong></div>
+        </div>
+
+        <div class="container">
+            <div class="chat-list" id="chat-list">
+                <div class="empty-state">
+                    <div class="empty-icon">&#128220;</div>
+                    <div class="empty-title">هیچ گفتگویی یافت نشد</div>
+                    <div class="empty-desc">هنوز گفتگویی ثبت نشده است</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        var ADMIN_AUTH_KEY = 'oay_admin_authenticated';
+        var ADMIN_AUTH_TIMEOUT = 30 * 60 * 1000;
+
+        function checkAuth() {
+            var authData = localStorage.getItem(ADMIN_AUTH_KEY);
+            if (!authData) return false;
+            try {
+                var data = JSON.parse(authData);
+                if (Date.now() - data.timestamp > ADMIN_AUTH_TIMEOUT) {
+                    localStorage.removeItem(ADMIN_AUTH_KEY);
+                    return false;
+                }
+                return data.authenticated === true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // Check auth on load
+        if (!checkAuth()) {
+            document.getElementById('no-access').classList.add('active');
+            document.getElementById('main-content').style.display = 'none';
+            return;
+        }
+
+        // Load all chats
+        var allChats = [];
+        try {
+            var saved = localStorage.getItem('oay_chats');
+            if (saved) allChats = JSON.parse(saved);
+        } catch(e) {
+            allChats = [];
+        }
+
+        // Sort by date (oldest first for report)
+        allChats.sort(function(a, b) {
+            return (a.timestamp || 0) - (b.timestamp || 0);
+        });
+
+        // Stats
+        var totalMessages = 0;
+        var users = {};
+        var firstDate = null;
+
+        for (var i = 0; i < allChats.length; i++) {
+            var chat = allChats[i];
+            totalMessages += (chat.messages && chat.messages.length) || 0;
+            var phone = chat.userPhone || 'unknown';
+            users[phone] = true;
+            if (!firstDate || chat.timestamp < firstDate) {
+                firstDate = chat.timestamp;
+            }
+        }
+
+        document.getElementById('total-chats').textContent = allChats.length;
+        document.getElementById('total-messages').textContent = totalMessages;
+        document.getElementById('total-users').textContent = Object.keys(users).length;
+        document.getElementById('first-date').textContent = firstDate ? new Date(firstDate).toLocaleDateString('fa-IR') : '-';
+
+        // Render chats
+        var chatList = document.getElementById('chat-list');
+
+        function renderChats(searchTerm) {
+            var chats = allChats;
+
+            if (searchTerm) {
+                var term = searchTerm.toLowerCase();
+                chats = chats.filter(function(chat) {
+                    var text = (chat.userName || '') + ' ' + (chat.userPhone || '') + ' ';
+                    if (chat.messages) {
+                        for (var i = 0; i < chat.messages.length; i++) {
+                            text += chat.messages[i].content + ' ';
+                        }
+                    }
+                    return text.toLowerCase().indexOf(term) !== -1;
+                });
+            }
+
+            if (chats.length === 0) {
+                chatList.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-title">هیچ گفتگویی یافت نشد</div><div class="empty-desc">' + (searchTerm ? 'جستجوی دیگری امتحان کنید' : 'هنوز گفتگویی ثبت نشده است') + '</div></div>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < chats.length; i++) {
+                var chat = chats[i];
+                var date = new Date(chat.timestamp).toLocaleString('fa-IR');
+                var messageCount = (chat.messages && chat.messages.length) || 0;
+                var userName = chat.userName || 'ناشناس';
+                var userPhone = chat.userPhone || 'شماره ثبت نشده';
+                var preview = '';
+                if (chat.messages) {
+                    for (var j = 0; j < chat.messages.length; j++) {
+                        if (chat.messages[j].role === 'user') {
+                            preview = chat.messages[j].content.substring(0, 80) + (chat.messages[j].content.length > 80 ? '...' : '');
+                            break;
+                        }
+                    }
+                }
+                if (!preview) preview = 'بدون عنوان';
+
+                var messagesHtml = '';
+                if (chat.messages) {
+                    for (var j = 0; j < chat.messages.length; j++) {
+                        var msg = chat.messages[j];
+                        var isUser = msg.role === 'user';
+                        messagesHtml += '<div class="msg-item ' + (isUser ? 'user' : 'bot') + '">' +
+                            '<div class="msg-avatar ' + (isUser ? 'user' : 'bot') + '">' + (isUser ? '&#128100;' : '&#128330;') + '</div>' +
+                            '<div class="msg-content"><div class="msg-author">' + (isUser ? userName : 'اوای یقین') + '</div>' +
+                            '<div class="msg-text">' + escapeHtml(msg.content) + '</div></div></div>';
+                    }
+                }
+
+                html += '<div class="chat-card">' +
+                    '<div class="chat-header"><div class="chat-title">گفتگوی شماره ' + (i + 1) + '</div><div class="chat-date">' + date + '</div></div>' +
+                    '<div class="chat-user-info">' +
+                    '<span class="user-badge user-name">&#128100; ' + escapeHtml(userName) + '</span>' +
+                    '<span class="user-badge user-phone">&#128222; ' + escapeHtml(userPhone) + '</span>' +
+                    '<span class="user-badge msg-count">&#128172; ' + messageCount + ' پیام</span>' +
+                    '</div>' +
+                    '<div class="chat-preview">' + escapeHtml(preview) + '</div>' +
+                    '<div class="chat-actions">' +
+                    '<button class="chat-btn view" onclick="toggleMessages(this)" data-chat-id="' + chat.id + '">&#128065; مشاهده پیام‌ها</button>' +
+                    '<button class="chat-btn export" onclick="exportChat(\'' + chat.id + '\')">&#128190; خروجی</button>' +
+                    '</div>' +
+                    '<div class="chat-messages" id="msgs-' + chat.id + '">' + messagesHtml + '</div>' +
+                    '</div>';
+            }
+
+            chatList.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.toggleMessages = function(btn) {
+            var chatId = btn.getAttribute('data-chat-id');
+            var msgsDiv = document.getElementById('msgs-' + chatId);
+            if (msgsDiv) {
+                var isOpen = msgsDiv.classList.contains('open');
+                if (isOpen) {
+                    msgsDiv.classList.remove('open');
+                    btn.innerHTML = '&#128065; مشاهده پیام‌ها';
+                } else {
+                    msgsDiv.classList.add('open');
+                    btn.innerHTML = '&#128065; بستن پیام‌ها';
+                }
+            }
+        };
+
+        window.exportChat = function(chatId) {
+            var chat = null;
+            for (var i = 0; i < allChats.length; i++) {
+                if (allChats[i].id === chatId) {
+                    chat = allChats[i];
+                    break;
+                }
+            }
+            if (!chat) return;
+
+            var text = 'گفتگو: ' + (chat.title || 'بدون عنوان') + '\n';
+            text += 'کاربر: ' + (chat.userName || 'ناشناس') + '\n';
+            text += 'شماره: ' + (chat.userPhone || 'ثبت نشده') + '\n';
+            text += 'تاریخ: ' + new Date(chat.timestamp).toLocaleString('fa-IR') + '\n';
+            text += '========================================\n\n';
+
+            if (chat.messages) {
+                for (var i = 0; i < chat.messages.length; i++) {
+                    var msg = chat.messages[i];
+                    text += (msg.role === 'user' ? (chat.userName || 'کاربر') : 'اوای یقین') + ':\n';
+                    text += msg.content + '\n\n';
+                }
+            }
+
+            var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'chat-' + chatId + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        // Export all chats
+        document.getElementById('export-all').addEventListener('click', function() {
+            var csv = '\uFEFF'; // BOM for Excel UTF-8
+            csv += 'شماره,نام کاربر,شماره تماس,تاریخ,تعداد پیام,اولین پیام\n';
+
+            for (var i = 0; i < allChats.length; i++) {
+                var chat = allChats[i];
+                var name = (chat.userName || 'ناشناس').replace(/,/g, ' ');
+                var phone = (chat.userPhone || 'ثبت نشده').replace(/,/g, ' ');
+                var date = new Date(chat.timestamp).toLocaleString('fa-IR');
+                var count = (chat.messages && chat.messages.length) || 0;
+                var firstMsg = '';
+                if (chat.messages) {
+                    for (var j = 0; j < chat.messages.length; j++) {
+                        if (chat.messages[j].role === 'user') {
+                            firstMsg = chat.messages[j].content.substring(0, 50).replace(/,/g, ' ').replace(/\n/g, ' ');
+                            break;
+                        }
+                    }
+                }
+                csv += (i + 1) + ',' + name + ',' + phone + ',' + date + ',' + count + ',' + firstMsg + '\n';
+            }
+
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'all-chats-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Search
+        document.getElementById('search-input').addEventListener('input', function() {
+            renderChats(this.value);
+        });
+
+        renderChats();
+    })();
+    </script>
+</body>
+</html>
